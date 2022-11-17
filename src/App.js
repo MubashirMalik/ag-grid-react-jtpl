@@ -1,3 +1,4 @@
+import { useEffect, useState, useMemo, useCallback, useRef } from "react"
 import { AgGridReact } from "ag-grid-react"
 
 import'ag-grid-community/dist/styles/ag-grid.css'
@@ -5,24 +6,47 @@ import'ag-grid-community/dist/styles/ag-grid.css'
 import'ag-grid-community/dist/styles/ag-theme-alpine.css'
 
 function App() {
-    const rowData = [
-        {name: 'Honda CD 70', make: 'Honda', model: '2021', price: 100000},
-        {name: 'YBR 125G CD 70', make: 'Yamaha', model: '2020', price: 255000},
-        {name: 'Honda CG 125', make: 'Honda', model: '2022', price: 200000}
-    ]
-    const columnDefs = [
-        {field: 'name'},
+    const [rowData, setRowData] = useState([])
+    const gridRef = useRef()
+
+    const [columnDefs, setColumnDefs] = useState([
         {field: 'make'},
-        {field: 'model'},
-        {field: 'price'},
-    ]
+        {field: 'model', filter: true},
+        {field: 'price', sortable: true}
+    ]);
+
+    const defaultColDef = useMemo(() => ({
+        sortable: true,
+        filter: true,
+    }), [])
+
+    const cellClickedListener = useCallback((e) => {
+        console.log("Cell clicked", e)
+    })
+
+    const pushMeClicked = useCallback(e => {
+        gridRef.current.api.deselectAll()
+    })
+
+    useEffect(() => {
+        fetch('https://www.ag-grid.com/example-assets/row-data.json')
+        .then(result => result.json())
+        .then(rowData => setRowData(rowData))
+    }, []);
     
     return (
         // width & height is determined by the same property of parent div
         <div className="ag-theme-alpine" style={{height: 500}}>
             <AgGridReact 
+                ref={gridRef}
                 rowData={rowData}
-                columnDefs={columnDefs} />
+                columnDefs={columnDefs} 
+                defaultColDef={defaultColDef} 
+                animateRows={true} 
+                rowSelection="multiple" 
+                onCellClicked={cellClickedListener}
+            />
+            <button onClick={pushMeClicked}>Deselect All</button>
         </div>
     );
 }
