@@ -1,52 +1,86 @@
-import { useEffect, useState, useMemo, useCallback, useRef } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { AgGridReact } from "ag-grid-react"
 
 import'ag-grid-community/dist/styles/ag-grid.css'
-// import'ag-grid-community/dist/styles/ag-theme-alpine-dark.css'
+import'ag-grid-community/dist/styles/ag-theme-alpine-dark.css'
 import'ag-grid-community/dist/styles/ag-theme-alpine.css'
 
 function App() {
-    const [rowData, setRowData] = useState([])
-    const gridRef = useRef()
-
-    const [columnDefs, setColumnDefs] = useState([
-        {field: 'make'},
-        {field: 'model', filter: true},
-        {field: 'price', sortable: true}
-    ]);
+    const [gridRef, setGridRef] = useState()
+    const columnDefs = [
+        {
+            field: 'id'
+        },
+        { 
+            field: 'name'
+        },
+        {
+            field: 'symbol', 
+        },
+        {
+            field: 'exchangeRate',
+        }
+    ]
 
     const defaultColDef = useMemo(() => ({
         sortable: true,
         filter: true,
     }), [])
 
-    const cellClickedListener = useCallback((e) => {
-        console.log("Cell clicked", e)
-    })
-
-    const pushMeClicked = useCallback(e => {
-        gridRef.current.api.deselectAll()
-    })
-
-    useEffect(() => {
-        fetch('https://www.ag-grid.com/example-assets/row-data.json')
-        .then(result => result.json())
-        .then(rowData => setRowData(rowData))
-    }, []);
+    // useEffect(() => {
+    //     fetch(`http://localhost:3012/currency/?startRow=${startRow}&endRow=${startRow+10}`, {
+    //     })
+    //     .then(result => result.json())
+    //     .then(rowData => setRowData(rowData))
+    // }, [startRow]);
     
+    useEffect(() => {
+        if (gridRef) {
+          const dataSource = {
+            getRows: (params) => {
+              gridRef.showLoadingOverlay();
+              const startRow = params.startRow;
+              const endRow = params.endRow;
+              fetch(`http://localhost:3012/currency/?startRow=${startRow}&endRow=${endRow}`)
+                .then(resp => resp.json())
+                .then(res => {
+                    
+                  if (!res) {
+                    gridRef.showNoRowsOverlay();
+                  }
+                  else {
+                    gridRef.hideOverlay();
+                  }
+                  params.successCallback(res.records, res.totalRecords);
+                }).catch(err => {
+                  gridRef.showNoRowsOverlay();
+                  params.successCallback([], 0);
+                });
+            }
+          }
+     
+          gridRef.setDatasource(dataSource);
+        }
+      }, [gridRef]);
+    
+
     return (
         // width & height is determined by the same property of parent div
-        <div className="ag-theme-alpine" style={{height: 500}}>
-            <AgGridReact 
-                ref={gridRef}
-                rowData={rowData}
-                columnDefs={columnDefs} 
-                defaultColDef={defaultColDef} 
-                animateRows={true} 
-                rowSelection="multiple" 
-                onCellClicked={cellClickedListener}
-            />
-            <button onClick={pushMeClicked}>Deselect All</button>
+        <div style={{ margin: '50px'}}>
+            <div className="ag-theme-alpine" style={{height: 300}}>
+                <AgGridReact 
+                    onGridReady={(params) => setGridRef(params.api)}
+                    rowData={[]}
+                    columnDefs={columnDefs} 
+                    defaultColDef={defaultColDef} 
+                    animateRows={true} 
+                    rowModelType="infinite"
+                    serverSideInfiniteScroll={true}
+                    cacheBlockSize={30} // Total Items to be fetched at a time
+                    pagination={true}
+                    paginationPageSize={5}
+                />
+            </div>
         </div>
     );
 }
