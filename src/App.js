@@ -4,15 +4,21 @@ import { AgGridReact } from "ag-grid-react"
 import'ag-grid-community/dist/styles/ag-grid.css'
 import'ag-grid-community/dist/styles/ag-theme-alpine-dark.css'
 import'ag-grid-community/dist/styles/ag-theme-alpine.css'
+import axios from "axios"
 
 function App() {
     const [gridRef, setGridRef] = useState()
     const columnDefs = [
         {
-            field: 'id'
+            field: 'id',
+            filter: 'agNumberColumnFilter',
         },
         { 
-            field: 'name'
+            field: 'name',
+            filter: 'agTextColumnFilter',
+            filterParams: {
+                // pass in additional parameters to the Text Filter
+            },
         },
         {
             field: 'symbol', 
@@ -26,13 +32,6 @@ function App() {
         sortable: true,
         filter: true,
     }), [])
-
-    // useEffect(() => {
-    //     fetch(`http://localhost:3012/currency/?startRow=${startRow}&endRow=${startRow+10}`, {
-    //     })
-    //     .then(result => result.json())
-    //     .then(rowData => setRowData(rowData))
-    // }, [startRow]);
     
     useEffect(() => {
         if (gridRef) {
@@ -41,17 +40,22 @@ function App() {
               gridRef.showLoadingOverlay();
               const startRow = params.startRow;
               const endRow = params.endRow;
-              fetch(`http://localhost:3012/currency/?startRow=${startRow}&endRow=${endRow}`)
-                .then(resp => resp.json())
+              console.log(params)
+              axios.get(`http://localhost:3012/currency/`, {
+                params: {
+                    startRow,
+                    endRow  
+                }
+              })
                 .then(res => {
                     
-                  if (!res) {
+                  if (!res.data) {
                     gridRef.showNoRowsOverlay();
                   }
                   else {
                     gridRef.hideOverlay();
                   }
-                  params.successCallback(res.records, res.totalRecords);
+                  params.successCallback(res.data.records, res.data.totalRecords);
                 }).catch(err => {
                   gridRef.showNoRowsOverlay();
                   params.successCallback([], 0);
