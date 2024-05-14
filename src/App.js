@@ -38,14 +38,14 @@ function App() {
           const dataSource = {
             getRows: (params) => {
               gridRef.showLoadingOverlay();
-              const startRow = params.startRow;
-              const endRow = params.endRow;
+              
               console.log(params)
-              axios.get(`http://localhost:3012/currency/`, {
-                params: {
-                    startRow,
-                    endRow  
-                }
+              axios.post(`http://localhost:3012/currency/list`, {
+                // params: {
+                    startRow: params.startRow,
+                    endRow: params.endRow,
+                    filterModel: params.filterModel,  
+                // }
               })
                 .then(res => {
                     
@@ -80,7 +80,7 @@ function App() {
                     animateRows={true} 
                     rowModelType="infinite"
                     serverSideInfiniteScroll={true}
-                    cacheBlockSize={30} // Total Items to be fetched at a time
+                    cacheBlockSize={20} // Total Items to be fetched at a time
                     pagination={true}
                     paginationPageSize={5}
                 />
