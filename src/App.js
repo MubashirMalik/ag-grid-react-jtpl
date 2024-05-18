@@ -39,13 +39,10 @@ function App() {
             getRows: (params) => {
               gridRef.showLoadingOverlay();
               
-              console.log(params)
-              axios.post(`http://localhost:3012/currency/list`, {
-                // params: {
-                    startRow: params.startRow,
-                    endRow: params.endRow,
-                    filterModel: params.filterModel,  
-                // }
+              axios.post(`http://localhost:3012/currency/all`, {
+                startRow: params.startRow,
+                endRow: params.endRow,
+                filterModel: params.filterModel
               })
                 .then(res => {
                     
